@@ -20,19 +20,6 @@ jobs:
         echo "::set-output name=current::$CURRENT_RELEASE"
       shell: bash
 
-    - name: Create Tag
-      if: ${{ steps.versions.outputs.cli != steps.versions.outputs.current }}
-      uses: actions/github-script@v3
-      with:
-        github-token: ${{ github.token }}
-        script: |
-          github.git.createRef({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            ref: "refs/tags/${{ steps.versions.outputs.cli }}",
-            sha: context.sha
-          })
-
     - name: Create Release
       if: ${{ steps.versions.outputs.cli != steps.versions.outputs.current }}
       uses: softprops/action-gh-release@v1
