@@ -8,7 +8,7 @@ on:
       - v*
 
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "*/5 * * * *"
 
 env:
   IMAGE_NAME: codeql
