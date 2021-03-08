@@ -35,6 +35,7 @@ jobs:
       id: cache-release-version
       uses: actions/cache@v2
       with:
+        path: ~/.release-version
         key: ${{ runner.os }}-${{ steps.codeql-cli.outputs.release }}
 
     - name: Generate Codeql Cli tag version
