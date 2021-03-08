@@ -41,7 +41,7 @@ jobs:
           github.git.createRef({
             owner: context.repo.owner,
             repo: context.repo.repo,
-            ref: "refs/tags/${{ steps.codeql-cli.outputs.release }}",
+            ref: "refs/tags/${{ steps.versions.outputs.cli }}",
             sha: context.sha
           })
 
@@ -49,7 +49,7 @@ jobs:
       if: ${{ steps.versions.outputs.cli != steps.versions.outputs.current }}
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ steps.codeql-cli.outputs.release }}
+        tag_name: ${{ steps.versions.outputs.cli }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
