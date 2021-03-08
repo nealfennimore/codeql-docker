@@ -4,8 +4,9 @@ on:
   push:
     branches:
       - master
-    tags:
-      - v*
+
+  release:
+    types: [published]
 
   schedule:
     - cron: "*/5 * * * *"
@@ -34,7 +35,6 @@ jobs:
       id: cache-release-version
       uses: actions/cache@v2
       with:
-        path: ~/.release-version
         key: ${{ runner.os }}-${{ steps.codeql-cli.outputs.release }}
 
     - name: Generate Codeql Cli tag version
@@ -52,7 +52,7 @@ jobs:
 
   push:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: ${{ github.event_name == 'push' || github.event_name == 'release' }}
 
     steps:
       - uses: actions/checkout@v2
