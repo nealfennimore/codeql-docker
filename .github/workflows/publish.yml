@@ -6,7 +6,6 @@ on:
       - master
 
   release:
-    types: [created, released, published]
 
 env:
   IMAGE_NAME: codeql
