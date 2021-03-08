@@ -74,4 +74,4 @@ jobs:
             docker tag $IMAGE_NAME ${{ steps.build.outputs.image_id }}:latest
           fi
 
-          docker push -a
+          docker image push --all-tags
