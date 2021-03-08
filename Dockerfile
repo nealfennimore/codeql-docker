@@ -9,8 +9,8 @@ RUN apt update \
 RUN useradd -ms /bin/bash cli
 USER cli
 
-RUN wget -O /tmp/codeql-linux64.zip https://github.com/github/codeql-cli-binaries/releases/download/v$CLI_VERSION/codeql-linux64.zip \
-    && unzip /tmp/codeql-linux64.zip -d $HOME \
+RUN wget -q -O /tmp/codeql-linux64.zip https://github.com/github/codeql-cli-binaries/releases/download/v$CLI_VERSION/codeql-linux64.zip \
+    && unzip -q /tmp/codeql-linux64.zip -d $HOME \
     && rm /tmp/codeql-linux64.zip
 
 RUN git clone https://github.com/github/codeql.git $HOME/codeql-repo \
