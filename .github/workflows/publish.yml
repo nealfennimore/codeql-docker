@@ -23,33 +23,20 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: Get latest codeql cli version
-      id: codeql-cli
+    - name: Get latest versions
+      id: versions
       run: |
-        RELEASE=$(curl https://api.github.com/repos/github/codeql-cli-binaries/releases/latest | jq -r '.name')
-        echo -n "$RELEASE" > ~/.release-version
-        echo "::set-output name=release::$RELEASE"
+        CLI_RELEASE=$(curl https://api.github.com/repos/github/codeql-cli-binaries/releases/latest | jq -r '.tag_name')
+        CURRENT_RELEASE=$(curl https://api.github.com/repos/nealfennimore/codeql-docker/releases/latest | jq -r '.tag_name')
+        echo "::set-output name=cli::$CLI_RELEASE"
+        echo "::set-output name=current::$CURRENT_RELEASE"
       shell: bash
 
-    - name: Cache release version
-      id: cache-release-version
-      uses: actions/cache@v2
-      with:
-        path: ~/.release-version
-        key: ${{ runner.os }}-${{ steps.codeql-cli.outputs.release }}
-
     - name: Generate Codeql Cli tag version
-      if: steps.cache-release-version.cache-hit != 'true'
-      uses: actions/github-script@v3
-      with:
-        github-token: ${{ github.token }}
-        script: |
-          github.git.createRef({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            ref: "refs/tags/${{ steps.codeql-cli.outputs.release }}",
-            sha: context.sha
-          })
+      if: ${{ steps.versions.outputs.cli != steps.versions.outputs.current }}
+      uses: softprops/action-gh-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   push:
     runs-on: ubuntu-latest
@@ -79,7 +66,7 @@ jobs:
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
 
           # Use Docker `latest` tag convention
-          [ "$VERSION" == "master" ] && VERSION=$(curl https://api.github.com/repos/github/codeql-cli-binaries/releases/latest | jq -r '.name' | sed -e 's/^v//')
+          [ "$VERSION" == "master" ] && VERSION=$(curl https://api.github.com/repos/github/codeql-cli-binaries/releases/latest | jq -r '.tag_name' | sed -e 's/^v//')
 
           echo BRANCH=$BRANCH
           echo IMAGE_ID=$IMAGE_ID
