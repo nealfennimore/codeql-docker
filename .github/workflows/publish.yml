@@ -1,0 +1,110 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - v*
+
+  schedule:
+    - cron: "0 0 * * *"
+
+env:
+  IMAGE_NAME: codeql
+  CONTAINER_REGISTRY_HOST: ghcr.io
+
+jobs:
+  schedule:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Get latest codeql cli version
+      id: codeql-cli
+      run: |
+        RELEASE=$(curl https://api.github.com/repos/github/codeql-cli-binaries/releases/latest | jq -r '.name')
+        echo -n "$RELEASE" > ~/.release-version
+        echo "::set-output name=release::$RELEASE"
+      shell: bash
+
+    - name: Cache release version
+      id: cache-release-version
+      uses: actions/cache@v2
+      with:
+        path: ~/.release-version
+        key: ${{ runner.os }}-${{ steps.codeql-cli.outputs.release }}
+
+    - name: Generate Codeql Cli tag version
+      if: steps.cache-release-version.cache-hit != 'true'
+      uses: actions/github-script@v3
+      with:
+        github-token: ${{ github.token }}
+        script: |
+          github.git.createRef({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            ref: "refs/tags/${{ steps.codeql-cli.outputs.release }}",
+            sha: context.sha
+          })
+
+  push:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: FranzDiebold/github-env-vars-action@v2
+
+      - name: Log into registry
+        run: echo "${{ secrets.READ_WRITE_PACKAGES_PAT }}" | docker login $CONTAINER_REGISTRY_HOST -u $CI_REPOSITORY_OWNER --password-stdin
+
+      - name: Set build variables
+        id: build
+        run: |
+          BRANCH=$(echo ${GITHUB_REF#refs/heads/})
+
+          IMAGE_ID=$CONTAINER_REGISTRY_HOST/$CI_REPOSITORY_OWNER/$IMAGE_NAME
+
+          # Change all uppercase to lowercase
+          IMAGE_ID=$(echo $IMAGE_ID | tr '[A-Z]' '[a-z]')
+
+          # Strip git ref prefix from version
+          VERSION=$(echo "${{ github.ref }}" | sed -e 's,.*/\(.*\),\1,')
+
+          # Strip "v" prefix from tag name
+          [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
+
+          # Use Docker `latest` tag convention
+          [ "$VERSION" == "master" ] && VERSION=latest
+
+          echo BRANCH=$BRANCH
+          echo IMAGE_ID=$IMAGE_ID
+          echo VERSION=$VERSION
+
+          echo ::set-output name=branch::${BRANCH}
+          echo ::set-output name=image_id::${IMAGE_ID}
+          echo ::set-output name=version::${VERSION}
+
+      - name: Fetch cached image
+        run: >-
+          docker pull ${{ steps.build.outputs.image_id }}:${{ steps.build.outputs.version }} || true
+
+      - name: Build image
+        run: >-
+          docker build .
+          --file Dockerfile
+          --tag $IMAGE_NAME
+          --cache-from ${{ steps.build.outputs.image_id }}:${{ steps.build.outputs.version }}
+          --label "org.opencontainers.image.revision=$GITHUB_SHA"
+          --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}"
+          --label "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          --label "com.github.repo.dockerfile=Dockerfile"
+          --label "com.github.repo.branch=${{ steps.build.outputs.branch }}"
+
+      - name: Push image
+        run: |
+          docker tag $IMAGE_NAME ${{ steps.build.outputs.image_id }}:${{ steps.build.outputs.version }}
+          docker push ${{ steps.build.outputs.image_id }}:${{ steps.build.outputs.version }}
