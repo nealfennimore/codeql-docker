@@ -6,7 +6,7 @@ on:
       - master
 
   release:
-    types: [published, unpublished, created, edited, deleted, prereleased, release]
+    types: [published]
 env:
   IMAGE_NAME: codeql
   CONTAINER_REGISTRY_HOST: ghcr.io
