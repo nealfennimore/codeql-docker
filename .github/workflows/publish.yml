@@ -8,54 +8,13 @@ on:
   release:
     types: [published]
 
-  schedule:
-    - cron: "*/5 * * * *"
-
 env:
   IMAGE_NAME: codeql
   CONTAINER_REGISTRY_HOST: ghcr.io
 
 jobs:
-  schedule:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'schedule'
-
-    steps:
-    - uses: actions/checkout@v2
-
-    - name: Get latest versions
-      id: versions
-      run: |
-        CLI_RELEASE=$(curl https://api.github.com/repos/github/codeql-cli-binaries/releases/latest | jq -r '.tag_name')
-        CURRENT_RELEASE=$(curl https://api.github.com/repos/nealfennimore/codeql-docker/releases/latest | jq -r '.tag_name')
-        echo "::set-output name=cli::$CLI_RELEASE"
-        echo "::set-output name=current::$CURRENT_RELEASE"
-      shell: bash
-
-    - name: Create Tag
-      if: ${{ steps.versions.outputs.cli != steps.versions.outputs.current }}
-      uses: actions/github-script@v3
-      with:
-        github-token: ${{ github.token }}
-        script: |
-          github.git.createRef({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            ref: "refs/tags/${{ steps.versions.outputs.cli }}",
-            sha: context.sha
-          })
-
-    - name: Create Release
-      if: ${{ steps.versions.outputs.cli != steps.versions.outputs.current }}
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ steps.versions.outputs.cli }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   push:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' || github.event_name == 'release' }}
 
     steps:
       - uses: actions/checkout@v2
