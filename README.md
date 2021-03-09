@@ -19,8 +19,8 @@ docker pull ghcr.io/nealfennimore/codeql:latest
 docker run --rm -it \
     -v ~/code/db:/tmp/db \
     -v ~/code/src:/tmp/src \
-    ghcr.io/nealfennimore/codeql \
-    codeql database create --language=javascript --source-root /tmp/src /tmp/db
+    ghcr.io/nealfennimore/codeql:$LANGUAGE \
+    codeql database create --language=$LANGUAGE --source-root /tmp/src /tmp/db
 ```
 
 #### Analyzing Source Code
@@ -29,8 +29,8 @@ docker run --rm -it \
     -v ~/code/db:/tmp/db \
     -v ~/code/src:/tmp/src \
     -v ~/code/output:/tmp/output \
-    ghcr.io/nealfennimore/codeql \
-    codeql database analyze /tmp/db javascript-lgtm.qls \
+    ghcr.io/nealfennimore/codeql:$LANGUAGE \
+    codeql database analyze /tmp/db $LANGUAGE-lgtm.qls \
         --format=sarif-latest \
         --output=/tmp/output/results.sarif
 ```
