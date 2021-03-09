@@ -44,8 +44,8 @@ jobs:
           [ "$VERSION" == "master" ] && VERSION=$(curl https://api.github.com/repos/github/codeql-cli-binaries/releases/latest | jq -r '.tag_name' | sed -e 's/^v//')
 
           TAG="${{ matrix.code_language }}-$VERSION"
-          if [ ${{ matrix.code_language }} == "none" ]; then
-            TAG="${{ steps.build.outputs.version }}"
+          if [ "${{ matrix.code_language }}" == "none" ]; then
+            TAG="$VERSION"
           fi
 
           echo BRANCH=$BRANCH
