@@ -22,4 +22,6 @@ ENV PATH="/home/cli/codeql:${PATH}"
 RUN codeql resolve qlpacks
 RUN codeql resolve languages
 
+RUN codeql query compile $HOME/codeql-repo/*/ql/src/codeql-suites/*.qls --threads=0
+
 CMD ["codeql", "--help"]
