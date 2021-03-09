@@ -3,9 +3,6 @@ FROM ubuntu:20.04 as base
 ARG CLI_VERSION=2.4.4
 ENV CLI_VERSION=$CLI_VERSION
 
-ARG CODE_LANGUAGE
-ENV CODE_LANGUAGE=$CODE_LANGUAGE
-
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
@@ -36,6 +33,9 @@ RUN apt-get update && \
         apt-get clean && \
         ln -s /usr/bin/python3.8 /usr/bin/python && \
         ln -s /usr/bin/pip3 /usr/bin/pip
+
+ARG CODE_LANGUAGE
+ENV CODE_LANGUAGE=$CODE_LANGUAGE
 
 # Install GO binary
 RUN if [ "$CODE_LANGUAGE" = "go" ]; then wget -q -c https://dl.google.com/go/go1.14.2.linux-amd64.tar.gz -O - | tar -xz -C /usr/local; fi
@@ -69,7 +69,7 @@ FROM source as compiled
 
 WORKDIR /home/cli/codeql
 
-RUN if [ -f "$HOME/codeql-repo/$CODE_LANGUAGE" ]; then codeql query compile --threads=0 $HOME/codeql-repo/$CODE_LANGUAGE/ql/src/codeql-suites/*.qls; fi
+RUN if [ -d "$HOME/codeql-repo/$CODE_LANGUAGE" ]; then codeql query compile --threads=0 $HOME/codeql-repo/$CODE_LANGUAGE/ql/src/codeql-suites/*.qls; fi
 RUN if [ "$CODE_LANGUAGE" = "go" ]; then codeql query compile --threads=0 $HOME/codeql-go/ql/src/codeql-suites/*.qls; fi
 
 CMD ["codeql", "--help"]
