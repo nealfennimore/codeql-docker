@@ -1,27 +1,75 @@
-FROM ubuntu:latest
+FROM ubuntu:20.04 as base
 
 ARG CLI_VERSION=2.4.4
+ENV CLI_VERSION=$CLI_VERSION
 
-RUN apt update \
-    && apt install -y git zip wget \
-    && rm -rf /var/lib/apt/lists/* 
+ARG CODE_LANGUAGE
+ENV CODE_LANGUAGE=$CODE_LANGUAGE
 
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends \
+        software-properties-common \
+        vim \
+        curl \
+        wget \
+        git \
+        build-essential \
+        unzip \
+        apt-transport-https \
+        python3.8 \
+        python3-venv \
+        python3-pip \
+        python3-setuptools \
+        python3-dev \
+        gnupg \
+        g++ \
+        make \
+        gcc \
+        apt-utils \
+        rsync \
+        file \
+        dos2unix \
+        gettext && \
+        apt-get clean && \
+        ln -s /usr/bin/python3.8 /usr/bin/python && \
+        ln -s /usr/bin/pip3 /usr/bin/pip
+
+# Install GO binary
+RUN if [ "$CODE_LANGUAGE" = "go" ]; then wget -q -c https://dl.google.com/go/go1.14.2.linux-amd64.tar.gz -O - | tar -xz -C /usr/local; fi
+
+# Add cli user
 RUN useradd -ms /bin/bash cli
 USER cli
 
+FROM base as source
+
+# Install codeql-cli
 RUN wget -q -O /tmp/codeql-linux64.zip https://github.com/github/codeql-cli-binaries/releases/download/v$CLI_VERSION/codeql-linux64.zip \
     && unzip -q /tmp/codeql-linux64.zip -d $HOME \
     && rm /tmp/codeql-linux64.zip
 
+# Clone codeql repo
 RUN git clone https://github.com/github/codeql.git $HOME/codeql-repo \
     && cd $HOME/codeql-repo \
     && git submodule update --init --remote
 
-ENV PATH="/home/cli/codeql:${PATH}"
+# Clone codeql-go repo
+RUN if [ "$CODE_LANGUAGE" = "go" ]; then git clone https://github.com/github/codeql-go.git $HOME/codeql-go; fi
 
+ENV PATH="/home/cli/codeql:/usr/local/go/bin:${PATH}"
+
+# Ensure languages resolve
 RUN codeql resolve qlpacks
 RUN codeql resolve languages
 
-RUN codeql query compile $HOME/codeql-repo/*/ql/src/codeql-suites/*.qls --threads=0
+FROM source as compiled
+
+WORKDIR /home/cli/codeql
+
+RUN if [ -f "$HOME/codeql-repo/$CODE_LANGUAGE" ]; then codeql query compile --threads=0 $HOME/codeql-repo/$CODE_LANGUAGE/ql/src/codeql-suites/*.qls; fi
+RUN if [ "$CODE_LANGUAGE" = "go" ]; then codeql query compile --threads=0 $HOME/codeql-go/ql/src/codeql-suites/*.qls; fi
 
 CMD ["codeql", "--help"]

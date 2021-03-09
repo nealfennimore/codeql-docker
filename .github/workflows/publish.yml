@@ -12,8 +12,11 @@ env:
   CONTAINER_REGISTRY_HOST: ghcr.io
 
 jobs:
-  push:
+  compile:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        code_language: [none, cpp, csharp, csv, go, html, java, javascript, properties, python, xml]
 
     steps:
       - uses: actions/checkout@v2
@@ -38,20 +41,26 @@ jobs:
           # Strip "v" prefix from tag name
           [[ "${{ github.ref }}" == "refs/tags/"* ]] && VERSION=$(echo $VERSION | sed -e 's/^v//')
 
-          # Use Docker `latest` tag convention
           [ "$VERSION" == "master" ] && VERSION=$(curl https://api.github.com/repos/github/codeql-cli-binaries/releases/latest | jq -r '.tag_name' | sed -e 's/^v//')
+
+          TAG="${{ matrix.code_language }}-${{ steps.build.outputs.version }}"
+          if [ ${{ matrix.code_language }} == "none" ]; then
+            TAG="${{ steps.build.outputs.version }}"
+          fi
 
           echo BRANCH=$BRANCH
           echo IMAGE_ID=$IMAGE_ID
           echo VERSION=$VERSION
+          echo TAG=$TAG
 
           echo ::set-output name=branch::${BRANCH}
           echo ::set-output name=image_id::${IMAGE_ID}
           echo ::set-output name=version::${VERSION}
+          echo ::set-output name=tag::${TAG}
 
       - name: Fetch cached image
         run: >-
-          docker pull ${{ steps.build.outputs.image_id }}:${{ steps.build.outputs.version }} || true
+          docker pull ${{ steps.build.outputs.image_id }}:${{ steps.build.outputs.tag }} || true
 
       - name: Build image
         run: >-
@@ -65,13 +74,18 @@ jobs:
           --label "com.github.repo.dockerfile=Dockerfile"
           --label "com.github.repo.branch=${{ steps.build.outputs.branch }}"
           --build-arg CLI_VERSION=${{ steps.build.outputs.version }}
+          --build-arg CODE_LANGUAGE=${{ matrix.code_language }}
 
       - name: Push image
         run: |
-          docker tag $IMAGE_NAME ${{ steps.build.outputs.image_id }}:${{ steps.build.outputs.version }}
+          docker tag $IMAGE_NAME ${{ steps.build.outputs.image_id }}:${{ steps.build.outputs.tag }}
 
           if [ ${{ github.event_name }} == "release" ]; then
-            docker tag $IMAGE_NAME ${{ steps.build.outputs.image_id }}:latest
+            if [ ${{ matrix.code_language }} == "none" ]; then
+              docker tag $IMAGE_NAME ${{ steps.build.outputs.image_id }}:latest
+            else
+              docker tag $IMAGE_NAME ${{ steps.build.outputs.image_id }}:${{ matrix.code_language }}
+            fi
           fi
 
           docker push -a ${{ steps.build.outputs.image_id }}
