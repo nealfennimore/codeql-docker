@@ -1,8 +1,5 @@
 FROM ubuntu:20.04 as base
 
-ARG CLI_VERSION=2.4.4
-ENV CLI_VERSION=$CLI_VERSION
-
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && \
@@ -34,6 +31,7 @@ RUN apt-get update && \
         ln -s /usr/bin/python3.8 /usr/bin/python && \
         ln -s /usr/bin/pip3 /usr/bin/pip
 
+
 ARG CODE_LANGUAGE
 ENV CODE_LANGUAGE=$CODE_LANGUAGE
 
@@ -45,6 +43,9 @@ RUN useradd -ms /bin/bash cli
 USER cli
 
 FROM base as source
+
+ARG CLI_VERSION=2.4.4
+ENV CLI_VERSION=$CLI_VERSION
 
 # Install codeql-cli
 RUN wget -q -O /tmp/codeql-linux64.zip https://github.com/github/codeql-cli-binaries/releases/download/v$CLI_VERSION/codeql-linux64.zip \
