@@ -58,3 +58,4 @@ docker run --rm -it \
         --format=sarif-latest \
         --output=/tmp/output/results.sarif
 ```
+
