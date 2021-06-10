@@ -28,8 +28,8 @@ RUN apt-get update && \
         dos2unix \
         gettext && \
         apt-get clean && \
-        ln -s /usr/bin/python3.8 /usr/bin/python && \
-        ln -s /usr/bin/pip3 /usr/bin/pip
+        ln -sf /usr/bin/python3.8 /usr/bin/python && \
+        ln -sf /usr/bin/pip3 /usr/bin/pip
 
 
 ARG CODE_LANGUAGE
