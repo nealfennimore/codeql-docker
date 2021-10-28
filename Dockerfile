@@ -53,12 +53,12 @@ RUN wget -q -O /tmp/codeql-linux64.zip https://github.com/github/codeql-cli-bina
     && rm /tmp/codeql-linux64.zip
 
 # Clone codeql repo
-RUN git clone https://github.com/github/codeql.git $HOME/codeql-repo \
+RUN git clone -b codeql-cli/v$CLI_VERSION https://github.com/github/codeql.git $HOME/codeql-repo \
     && cd $HOME/codeql-repo \
     && git submodule update --init --remote
 
 # Clone codeql-go repo
-RUN if [ "$CODE_LANGUAGE" = "go" ]; then git clone https://github.com/github/codeql-go.git $HOME/codeql-go; fi
+RUN if [ "$CODE_LANGUAGE" = "go" ]; then git clone -b codeql-cli/v$CLI_VERSION https://github.com/github/codeql-go.git $HOME/codeql-go; fi
 
 ENV PATH="/home/cli/codeql:/usr/local/go/bin:${PATH}"
 
