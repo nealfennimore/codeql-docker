@@ -71,6 +71,7 @@ jobs:
           --label "org.opencontainers.image.revision=$GITHUB_SHA"
           --label "org.opencontainers.image.source=https://github.com/${{ github.repository }}"
           --label "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          --label "org.opencontainers.image.description=CodeQL Docker for ${{ matrix.code_language }}"
           --label "com.github.repo.dockerfile=Dockerfile"
           --label "com.github.repo.branch=${{ steps.build.outputs.branch }}"
           --build-arg CLI_VERSION=${{ steps.build.outputs.version }}
