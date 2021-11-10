@@ -5,31 +5,32 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y --no-install-recommends \
-        software-properties-common \
-        vim \
-        curl \
-        wget \
-        git \
-        build-essential \
-        unzip \
         apt-transport-https \
-        python3.8 \
-        python3-venv \
+        apt-utils \
+        build-essential \
+        curl \
+        dos2unix \
+        file \
+        g++ \
+        gcc \
+        gettext \
+        git \
+        gnupg \
+        make \
+        maven \
+        python3-dev \
         python3-pip \
         python3-setuptools \
-        python3-dev \
-        gnupg \
-        g++ \
-        make \
-        gcc \
-        apt-utils \
+        python3-venv \
+        python3.8 \
         rsync \
-        file \
-        dos2unix \
-        gettext && \
-        apt-get clean && \
-        ln -sf /usr/bin/python3.8 /usr/bin/python && \
-        ln -sf /usr/bin/pip3 /usr/bin/pip
+        software-properties-common \
+        unzip \
+        vim \
+        wget && \
+    apt-get clean && \
+    ln -sf /usr/bin/python3.8 /usr/bin/python && \
+    ln -sf /usr/bin/pip3 /usr/bin/pip
 
 
 ARG CODE_LANGUAGE
