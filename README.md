@@ -16,6 +16,14 @@ docker pull ghcr.io/nealfennimore/codeql:go
 docker pull ghcr.io/nealfennimore/codeql:cpp
 ```
 
+### Building Locally
+If you prefer to build locally instead of using a precompiled image
+```sh
+docker build . \
+    --build-arg CLI_VERSION=2.7.0 \
+    --build-arg CODE_LANGUAGE=$CODE_LANGUAGE \
+    --tag ghcr.io/nealfennimore/codeql:$CODE_LANGUAGE
+```
 ## Usage
 
 ### Shell
