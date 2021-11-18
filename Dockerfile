@@ -72,6 +72,6 @@ FROM source as compiled
 WORKDIR /home/cli/codeql
 
 RUN if [ -d "$HOME/codeql-repo/$CODE_LANGUAGE" ]; then codeql query compile --threads=0 $HOME/codeql-repo/$CODE_LANGUAGE/ql/src/codeql-suites/*.qls; fi
-RUN if [ "$CODE_LANGUAGE" = "go" ]; then codeql query compile --threads=0 $HOME/codeql-go/ql/src/codeql-suites/*.qls; fi
+RUN if [ "$CODE_LANGUAGE" = "go" ]; then bash $HOME/codeql-go/scripts/install-deps.sh && codeql query compile --threads=0 $HOME/codeql-go/ql/src/codeql-suites/*.qls; fi
 
 CMD ["codeql", "--help"]
