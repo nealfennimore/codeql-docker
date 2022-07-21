@@ -54,12 +54,9 @@ RUN wget -q -O /tmp/codeql-linux64.zip https://github.com/github/codeql-cli-bina
     && rm /tmp/codeql-linux64.zip
 
 # Clone codeql repo
-RUN git clone -b codeql-cli/v$CLI_VERSION https://github.com/github/codeql.git $HOME/codeql-repo \
+RUN git clone -b codeql-cli/v$CLI_VERSION --single-branch https://github.com/github/codeql.git $HOME/codeql-repo \
     && cd $HOME/codeql-repo \
     && git submodule update --init --remote
-
-# Clone codeql-go repo
-RUN if [ "$CODE_LANGUAGE" = "go" ]; then git clone -b codeql-cli/v$CLI_VERSION https://github.com/github/codeql-go.git $HOME/codeql-go; fi
 
 ENV PATH="/home/cli/codeql:/usr/local/go/bin:${PATH}"
 
@@ -72,6 +69,5 @@ FROM source as compiled
 WORKDIR /home/cli/codeql
 
 RUN if [ -d "$HOME/codeql-repo/$CODE_LANGUAGE" ]; then codeql query compile --threads=0 $HOME/codeql-repo/$CODE_LANGUAGE/ql/src/codeql-suites/*.qls; fi
-RUN if [ "$CODE_LANGUAGE" = "go" ]; then bash $HOME/codeql-go/scripts/install-deps.sh && codeql query compile --threads=0 $HOME/codeql-go/ql/src/codeql-suites/*.qls; fi
 
 CMD ["codeql", "--help"]
